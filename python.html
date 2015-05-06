@@ -25,43 +25,60 @@
 	</div>
 <div id="md" style="display: none;">
 <!-- markdown -->
-Good good study, everyday!
-references:
-#simple reference
-http://isnowfy.github.io/about-simple-cn.html
-#Linux
-1.http://www.cnblogs.com/peida/archive/2012/12/05/2803591.html
-2.http://codingstandards.iteye.com/blog/786653
-#2015-05-06
-URL: uniform resource locator
+#python
+##work directory
+###reference
+http://stackoverflow.com/questions/5137497/find-current-directory-and-files-directory
+###how to get/change working directory
+1.get
 
-内部命令/外部命令
-reference：
-http://blog.csdn.net/taohuaxinmu123/article/details/10845001
-[root@jfht ~]# type -a type 
- type is a shell builtin     <== builtin就是指内建命令 
-[root@jfht ~]# type -a pwd 
- pwd is a shell builtin
- pwd is /bin/pwd           <== 此乃外部命令 
-实践：
--bash-3.2$ type -a echo
-echo is a shell builtin
-echo is /usr/bin/echo
-echo is /usr/local/bin/echo
-echo is /usr/ucb/echo
-echo is /opt/sfw/bin/echo
+import os
 
-意思是说echo既是内部命令也是外部命令？
-为什么在ebay的SAS服务器上一些命令找不到？
--bash-3.2$ ac
--bash: ac: command not found
+os.getcwd()
+'C:\\Users\\xiaozhzhang\\Downloads\\ulipad-master\\ulipad-master'
 
+2.change 
 
+---(python)
+>>> os.chdir('C:\\Python27')
+>>> os.getcwd()
+'C:\\Python27'
+----
 <!-- markdown end -->
 </div>
 <div class="entry" id="main">
 <!-- content -->
+<h1 id="python">python</h1>
 
+<h2 id="workdirectory">work directory</h2>
+
+<h3 id="reference">reference</h3>
+
+<p>http://stackoverflow.com/questions/5137497/find-current-directory-and-files-directory</p>
+
+<h3 id="howtogetchangeworkingdirectory">how to get/change working directory</h3>
+
+<p>1.get</p>
+
+<p>import os</p>
+
+<p>os.getcwd()
+'C:\Users\xiaozhzhang\Downloads\ulipad-master\ulipad-master'</p>
+
+<p>2.change </p>
+
+<p>---(python)</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>os.chdir('C:\Python27')
+      os.getcwd()</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<h2 id="cpython27">'C:\Python27'</h2>
 <!-- content end -->
 </div>
 <br>
