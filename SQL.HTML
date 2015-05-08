@@ -49,7 +49,7 @@ PRIMARY INDEX(    );
 COALESCE(CA.CATEGORY_GROUP,'Etc')
 ~~~~
 
-查看正在运行过的命令信息
+查看运行过的命令信息
 ~~~~{sql}
 EXEC DW_MONITOR_VIEWSX.M_LIVEACTIVITY;
 EXEC DW_MONITOR_VIEWSX.M_MY_QUERIES('2014-04-01');
@@ -78,7 +78,7 @@ Returns:  5
 SUBSTRING ( <column name or string literal> FROM <starting char> FOR <how many>)
 ~~~~
 
-排序编号的不同：
+##排序编号的不同：
 
 row\_number() --是没有重复值的排序(即使两天记录相等也是不重复的)，可以利用它来实现分页
 
@@ -112,11 +112,13 @@ WHERE tsize.DATABASENAME='P_trainingxi_T'
 GROUP BY 1,2,3,4,5,6,7;
 ~~~~
 
+告诉database表的index分布情况，有时候会加速后续代码的运行（有时候未必）
 ~~~~{sql}
 COLLECT STATS ON p_imbi_t.MH_ROTATION_TYPE_LKP INDEX  (ROTATION_ID, ROTATION_TYPE_ID);
 ~~~~
 
-关于条件放置位置对于效率的影响
+##关于条件放置位置对于效率的影响
+
 假設有三個table，table1、table2、table3，用下列方式 Join 起來：
 ~~~~{sql}
 SELECT * FROM table1
@@ -157,7 +159,7 @@ LEFT JOIN (SELECT * FROM table3 WHERE table3 condition) AS table3 ON table1.K1=t
 
 法3 有點類似 View 的作法，每個查詢都建立類似 View 的概念，每個表僅查詢出需要連結的部分進行連結。
 
-法2 適用在重複資料少的情形下，或是查詢基本上都是整張表，法3因為會建立子查詢，所以適用在大量重複資料的擷取，或是從巨型資料表中抽出少部分資料做 JOIN，比如說查詢的若是屬性表這類，大部分是1對1，法2會比較快，若是查詢類似事件紀錄這類1對多，或是事件紀錄太多只抽出最近的紀錄，可能法3會比較快。*/
+法2 適用在重複資料少的情形下，或是查詢基本上都是整張表，法3因為會建立子查詢，所以適用在大量重複資料的擷取，或是從巨型資料表中抽出少部分資料做 JOIN，比如說查詢的若是屬性表這類，大部分是1對1，法2會比較快，若是查詢類似事件紀錄這類1對多，或是事件紀錄太多只抽出最近的紀錄，可能法3會比較快。
 
 <!-- markdown end -->
 </div>
@@ -187,7 +189,7 @@ LEFT JOIN (SELECT * FROM table3 WHERE table3 condition) AS table3 ON table1.K1=t
 <pre class=" language-sql"><code class=" language-sql"><span class="token keyword">COALESCE</span><span class="token punctuation">(</span>CA<span class="token punctuation">.</span>CATEGORY_GROUP<span class="token punctuation">,</span><span class="token string">'Etc'</span><span class="token punctuation">)</span>
 </code></pre>
 
-<p>查看正在运行过的命令信息</p>
+<p>查看运行过的命令信息</p>
 
 <pre class=" language-sql"><code class=" language-sql"><span class="token keyword">EXEC</span> DW_MONITOR_VIEWSX<span class="token punctuation">.</span>M_LIVEACTIVITY<span class="token punctuation">;</span>
 <span class="token keyword">EXEC</span> DW_MONITOR_VIEWSX<span class="token punctuation">.</span>M_MY_QUERIES<span class="token punctuation">(</span><span class="token string">'2014-04-01'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
@@ -212,7 +214,7 @@ INTERVAL <span class="token operator">-</span><span class="token string">'3'</sp
 <pre class=" language-sql"><code class=" language-sql">SUBSTRING <span class="token punctuation">(</span> <span class="token operator">&lt;</span><span class="token keyword">column</span> name <span class="token operator">or</span> string literal&gt; <span class="token keyword">FROM</span> <span class="token operator">&lt;</span>starting char&gt; <span class="token keyword">FOR</span> <span class="token operator">&lt;</span>how many&gt;<span class="token punctuation">)</span>
 </code></pre>
 
-<p>排序编号的不同：</p>
+<h2>排序编号的不同：</h2>
 
 <p>row_number() --是没有重复值的排序(即使两天记录相等也是不重复的)，可以利用它来实现分页</p>
 
@@ -243,11 +245,14 @@ INTERVAL <span class="token operator">-</span><span class="token string">'3'</sp
 <span class="token keyword">GROUP</span> <span class="token keyword">BY</span> <span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">,</span><span class="token number">6</span><span class="token punctuation">,</span><span class="token number">7</span><span class="token punctuation">;</span>
 </code></pre>
 
+<p>告诉database表的index分布情况，有时候会加速后续代码的运行（有时候未必）</p>
+
 <pre class=" language-sql"><code class=" language-sql">COLLECT STATS <span class="token keyword">ON</span> p_imbi_t<span class="token punctuation">.</span>MH_ROTATION_TYPE_LKP <span class="token keyword">INDEX</span>  <span class="token punctuation">(</span>ROTATION_ID<span class="token punctuation">,</span> ROTATION_TYPE_ID<span class="token punctuation">)</span><span class="token punctuation">;</span>
 </code></pre>
 
-<p>关于条件放置位置对于效率的影响
-假設有三個table，table1、table2、table3，用下列方式 Join 起來：
+<h2>关于条件放置位置对于效率的影响</h2>
+
+<p>假設有三個table，table1、table2、table3，用下列方式 Join 起來：
 <pre class=" language-sql"><code class=" language-sql"><span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> table1
 <span class="token keyword">INNER</span> <span class="token keyword">JOIN</span> table2 <span class="token keyword">ON</span> table1<span class="token punctuation">.</span>K1<span class="token operator">=</span>table2<span class="token punctuation">.</span>K2
 <span class="token keyword">LEFT</span> <span class="token keyword">JOIN</span> table3 <span class="token keyword">ON</span> table1<span class="token punctuation">.</span>K1<span class="token operator">=</span>table3<span class="token punctuation">.</span>K3
@@ -279,7 +284,7 @@ INTERVAL <span class="token operator">-</span><span class="token string">'3'</sp
 
 <p>法3 有點類似 View 的作法，每個查詢都建立類似 View 的概念，每個表僅查詢出需要連結的部分進行連結。</p>
 
-<p>法2 適用在重複資料少的情形下，或是查詢基本上都是整張表，法3因為會建立子查詢，所以適用在大量重複資料的擷取，或是從巨型資料表中抽出少部分資料做 JOIN，比如說查詢的若是屬性表這類，大部分是1對1，法2會比較快，若是查詢類似事件紀錄這類1對多，或是事件紀錄太多只抽出最近的紀錄，可能法3會比較快。*/</p>
+<p>法2 適用在重複資料少的情形下，或是查詢基本上都是整張表，法3因為會建立子查詢，所以適用在大量重複資料的擷取，或是從巨型資料表中抽出少部分資料做 JOIN，比如說查詢的若是屬性表這類，大部分是1對1，法2會比較快，若是查詢類似事件紀錄這類1對多，或是事件紀錄太多只抽出最近的紀錄，可能法3會比較快。</p>
 <!-- content end -->
 </div>
 <br>
