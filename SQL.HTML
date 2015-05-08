@@ -25,12 +25,261 @@
 	</div>
 <div id="md" style="display: none;">
 <!-- markdown -->
+创建临表
+~~~~{sql}
+CREATE VOLATILE TABLE XXX AS 
+(
+
+)WITH DATA 
+PRIMARY INDEX(    )
+ON COMMIT PRESERVE ROWS;
+~~~~
+
+创建永久表
+~~~~{sql}
+CREATE TABLE      AS 
+(
+
+)WITH DATA 
+PRIMARY INDEX(    );
+~~~~
+
+取参数中第一个不是NULL的值，若取到非NULL值不会检查后面参数的合法性如（1/0），因此可以用来hack
+~~~~{sql}
+COALESCE(CA.CATEGORY_GROUP,'Etc')
+~~~~
+
+查看正在运行过的命令信息
+~~~~{sql}
+EXEC DW_MONITOR_VIEWSX.M_LIVEACTIVITY;
+EXEC DW_MONITOR_VIEWSX.M_MY_QUERIES('2014-04-01');
+
+INTERVAL -'3' MONTH
+~~~~
+--提取日期信息
+~~~~{sql}
+SELECT EXTRACT (YEAR FROM date1)
+~~~~
+
+在月份上加1，结果为2015-02-01
+~~~~{sql}
+SELECT  ADD_MONTHS('2015-01-01',1)
+~~~~
+
+~~~~{sql}
+SELECT INDEX('The Quick Brown Fox Jumps Over the lazy dog','Quick');
+Returns:  5
+
+SELECT POSITION(‘Quick’ IN ‘the quick brown fox jumps over the lazy dog’);
+Returns:  5
+~~~~
+
+~~~~{sql}
+SUBSTRING ( <column name or string literal> FROM <starting char> FOR <how many>)
+~~~~
+
+排序编号的不同：
+
+row\_number() --是没有重复值的排序(即使两天记录相等也是不重复的)，可以利用它来实现分页
+
+dense\_rank() --是连续排序，两个第二名仍然跟着第三名
+    
+rank()       --是跳跃排序，两个第二名下来就是第四名
+
+~~~~{sql}
+QUALIFY ROW_NUMBER() OVER (PARTITION BY ITEM_SITE_ID ORDER BY QTY_SOLD DESC) <=3
+~~~~
+
+
+~~~~{sql}
+SEL * FROM P_CSI_TBS_T.MZ_AUTOMATION_LOG
+
+SELECT     tsize.DATABASENAME
+,tsize.TABLENAME
+,TDEF.CreatorName       
+,tdef.CREATETIMESTAMP AS CREATED
+,tdef.LASTALTERTIMESTAMP AS LASTALTERED
+,tdef.ACCESSCOUNT
+,tdef.LASTACCESSTIMESTAMP AS LASTACCESS
+,SUM(tsize.CURRENTPERM) AS CURRENTPERM
+,SUM(tsize.PEAKPERM) AS PEAKPERM,
+(100 - (AVG(tsize.CURRENTPERM)/MAX(tsize.CURRENTPERM)*100)) AS SKEWFACTOR
+FROM       DBC.TABLESIZE tsize
+JOIN          DBC.TABLES tdef
+ON   tsize.DATABASENAME = tdef.DATABASENAME
+AND tsize.TABLENAME = tdef.TABLENAME
+WHERE tsize.DATABASENAME='P_trainingxi_T'
+GROUP BY 1,2,3,4,5,6,7;
+~~~~
+
+~~~~{sql}
+COLLECT STATS ON p_imbi_t.MH_ROTATION_TYPE_LKP INDEX  (ROTATION_ID, ROTATION_TYPE_ID);
+~~~~
+
+关于条件放置位置对于效率的影响
+假設有三個table，table1、table2、table3，用下列方式 Join 起來：
+~~~~{sql}
+SELECT * FROM table1
+INNER JOIN table2 ON table1.K1=table2.K2
+LEFT JOIN table3 ON table1.K1=table3.K3
+~~~~
+在此例中有三種放 WHERE  condition式的位置：
+
+1.
+~~~~{sql}
+SELECT * FROM table1
+INNER JOIN table2 ON table1.K1=table2.K2
+LEFT JOIN table3 ON table1.K1=table3.K3
+WHERE all condition
+~~~~
+2.
+~~~~{sql}
+SELECT * FROM table1
+INNER JOIN table2 ON (table1.K1=table2.K2 AND table1 and table2 condition)
+LEFT JOIN table3 ON (table1.K1=table3.K3 AND table1 and table3 condition)
+~~~~
+3.
+~~~~{sql}
+SELECT * FROM (SELECT * FROM table1 WHERE table1 condition) AS table1
+INNER JOIN (SELECT * FROM table2 WHERE table2 condition) AS table2 ON table1.K1=table2.K2
+LEFT JOIN (SELECT * FROM table3 WHERE table3 condition) AS table3 ON table1.K1=table3.K3
+~~~~
+法1 是相容度最高的用法，也是效能最差的方法，非簡單table格或必要下，不要使用，否則會嚴重造成資料庫查詢負擔，間接造成系統負擔。法1的作法是將所有內容先查詢出來，再逐步依 condition過濾出要的內容。
+
+法2 可提高一定的效能，但是可加在紅色的 condition就要看資料庫支援的能力，有些允許Key放在後方，有些不允許，甚至有些 WHERE  condition必須放在法1的位置， condition與 WHERE  condition相同，過濾資料多的放前面，過濾資料少的 condition放後面。查詢時，一般是先做table1table2連結，過濾完 condition後，再做table3連結，再過濾 condition。
+
+法3 有點類似 View 的作法，每個查詢都建立類似 View 的概念，每個table僅查詢出需要連結的部分進行連結。
+
+法2 適用在重複資料少的情形下，或是查詢基本上都是整張table，法3因為會建立子查詢，所以適用在大量重複資料的擷取，或是從巨型資料table中抽出少部分資料做 JOIN，比如說查詢的若是屬性table這類，大部分是1對1，法2會比較快，若是查詢類似事件紀錄這類1對多，或是事件紀錄太多只抽出最近的紀錄，可能法3會比較快。*/
+/*法1 是相容度最高的用法，也是效能最差的方法，非簡單表格或必要下，不要使用，否則會嚴重造成資料庫查詢負擔，間接造成系統負擔。法1的作法是將所有內容先查詢出來，再逐步依條件過濾出要的內容。
+
+法2 可提高一定的效能，但是可加在紅色的條件就要看資料庫支援的能力，有些允許Key放在後方，有些不允許，甚至有些 WHERE 條件必須放在法1的位置，條件與 WHERE 條件相同，過濾資料多的放前面，過濾資料少的條件放後面。查詢時，一般是先做表1表2連結，過濾完條件後，再做表3連結，再過濾條件。
+
+法3 有點類似 View 的作法，每個查詢都建立類似 View 的概念，每個表僅查詢出需要連結的部分進行連結。
+
+法2 適用在重複資料少的情形下，或是查詢基本上都是整張表，法3因為會建立子查詢，所以適用在大量重複資料的擷取，或是從巨型資料表中抽出少部分資料做 JOIN，比如說查詢的若是屬性表這類，大部分是1對1，法2會比較快，若是查詢類似事件紀錄這類1對多，或是事件紀錄太多只抽出最近的紀錄，可能法3會比較快。*/
 
 <!-- markdown end -->
 </div>
 <div class="entry" id="main">
 <!-- content -->
+<p>创建临表</p>
 
+<pre class=" language-sql"><code class=" language-sql"><span class="token keyword">CREATE</span> VOLATILE <span class="token keyword">TABLE</span> XXX <span class="token keyword">AS</span> 
+<span class="token punctuation">(</span>
+
+<span class="token punctuation">)</span><span class="token keyword">WITH</span> <span class="token keyword">DATA</span> 
+<span class="token keyword">PRIMARY</span> <span class="token keyword">INDEX</span><span class="token punctuation">(</span>    <span class="token punctuation">)</span>
+<span class="token keyword">ON</span> <span class="token keyword">COMMIT</span> PRESERVE <span class="token keyword">ROWS</span><span class="token punctuation">;</span>
+</code></pre>
+
+<p>创建永久表</p>
+
+<pre class=" language-sql"><code class=" language-sql"><span class="token keyword">CREATE</span> <span class="token keyword">TABLE</span>      <span class="token keyword">AS</span> 
+<span class="token punctuation">(</span>
+
+<span class="token punctuation">)</span><span class="token keyword">WITH</span> <span class="token keyword">DATA</span> 
+<span class="token keyword">PRIMARY</span> <span class="token keyword">INDEX</span><span class="token punctuation">(</span>    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+
+<p>取参数中第一个不是NULL的值，若取到非NULL值不会检查后面参数的合法性如（1/0），因此可以用来hack</p>
+
+<pre class=" language-sql"><code class=" language-sql"><span class="token keyword">COALESCE</span><span class="token punctuation">(</span>CA<span class="token punctuation">.</span>CATEGORY_GROUP<span class="token punctuation">,</span><span class="token string">'Etc'</span><span class="token punctuation">)</span>
+</code></pre>
+
+<p>查看正在运行过的命令信息</p>
+
+<pre class=" language-sql"><code class=" language-sql"><span class="token keyword">EXEC</span> DW_MONITOR_VIEWSX<span class="token punctuation">.</span>M_LIVEACTIVITY<span class="token punctuation">;</span>
+<span class="token keyword">EXEC</span> DW_MONITOR_VIEWSX<span class="token punctuation">.</span>M_MY_QUERIES<span class="token punctuation">(</span><span class="token string">'2014-04-01'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+INTERVAL <span class="token operator">-</span><span class="token string">'3'</span> MONTH
+</code></pre>--提取日期信息
+<pre class=" language-sql"><code class=" language-sql"><span class="token keyword">SELECT</span> EXTRACT <span class="token punctuation">(</span>YEAR <span class="token keyword">FROM</span> date1<span class="token punctuation">)</span>
+</code></pre>
+
+<p>在月份上加1，结果为2015-02-01</p>
+
+<pre class=" language-sql"><code class=" language-sql"><span class="token keyword">SELECT</span>  ADD_MONTHS<span class="token punctuation">(</span><span class="token string">'2015-01-01'</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span>
+</code></pre>
+
+<pre class=" language-sql"><code class=" language-sql"><span class="token keyword">SELECT</span> <span class="token keyword">INDEX</span><span class="token punctuation">(</span><span class="token string">'The Quick Brown Fox Jumps Over the lazy dog'</span><span class="token punctuation">,</span><span class="token string">'Quick'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">Returns</span>:  <span class="token number">5</span>
+
+<span class="token keyword">SELECT</span> POSITION<span class="token punctuation">(</span>‘<span class="token keyword">Quick</span>’ <span class="token operator">IN</span> ‘the <span class="token keyword">quick</span> brown fox jumps <span class="token keyword">over</span> the lazy dog’<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">Returns</span>:  <span class="token number">5</span>
+</code></pre>
+
+<pre class=" language-sql"><code class=" language-sql">SUBSTRING <span class="token punctuation">(</span> <span class="token operator">&lt;</span><span class="token keyword">column</span> name <span class="token operator">or</span> string literal&gt; <span class="token keyword">FROM</span> <span class="token operator">&lt;</span>starting char&gt; <span class="token keyword">FOR</span> <span class="token operator">&lt;</span>how many&gt;<span class="token punctuation">)</span>
+</code></pre>
+
+<p>排序编号的不同：</p>
+
+<p>row_number() --是没有重复值的排序(即使两天记录相等也是不重复的)，可以利用它来实现分页</p>
+
+<p>dense_rank() --是连续排序，两个第二名仍然跟着第三名</p>
+
+<p>rank()       --是跳跃排序，两个第二名下来就是第四名</p>
+
+<pre class=" language-sql"><code class=" language-sql">QUALIFY ROW_NUMBER<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">OVER</span> <span class="token punctuation">(</span><span class="token keyword">PARTITION</span> <span class="token keyword">BY</span> ITEM_SITE_ID <span class="token keyword">ORDER</span> <span class="token keyword">BY</span> QTY_SOLD <span class="token keyword">DESC</span><span class="token punctuation">)</span> <span class="token operator">&lt;</span><span class="token operator">=</span><span class="token number">3</span>
+</code></pre>
+
+<pre class=" language-sql"><code class=" language-sql">SEL <span class="token operator">*</span> <span class="token keyword">FROM</span> P_CSI_TBS_T<span class="token punctuation">.</span>MZ_AUTOMATION_LOG
+
+<span class="token keyword">SELECT</span>     tsize<span class="token punctuation">.</span>DATABASENAME
+<span class="token punctuation">,</span>tsize<span class="token punctuation">.</span>TABLENAME
+<span class="token punctuation">,</span>TDEF<span class="token punctuation">.</span>CreatorName       
+<span class="token punctuation">,</span>tdef<span class="token punctuation">.</span>CREATETIMESTAMP <span class="token keyword">AS</span> CREATED
+<span class="token punctuation">,</span>tdef<span class="token punctuation">.</span>LASTALTERTIMESTAMP <span class="token keyword">AS</span> LASTALTERED
+<span class="token punctuation">,</span>tdef<span class="token punctuation">.</span>ACCESSCOUNT
+<span class="token punctuation">,</span>tdef<span class="token punctuation">.</span>LASTACCESSTIMESTAMP <span class="token keyword">AS</span> LASTACCESS
+<span class="token punctuation">,</span>SUM<span class="token punctuation">(</span>tsize<span class="token punctuation">.</span>CURRENTPERM<span class="token punctuation">)</span> <span class="token keyword">AS</span> CURRENTPERM
+<span class="token punctuation">,</span>SUM<span class="token punctuation">(</span>tsize<span class="token punctuation">.</span>PEAKPERM<span class="token punctuation">)</span> <span class="token keyword">AS</span> PEAKPERM<span class="token punctuation">,</span>
+<span class="token punctuation">(</span><span class="token number">100</span> <span class="token operator">-</span> <span class="token punctuation">(</span>AVG<span class="token punctuation">(</span>tsize<span class="token punctuation">.</span>CURRENTPERM<span class="token punctuation">)</span><span class="token operator">/</span>MAX<span class="token punctuation">(</span>tsize<span class="token punctuation">.</span>CURRENTPERM<span class="token punctuation">)</span><span class="token operator">*</span><span class="token number">100</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token keyword">AS</span> SKEWFACTOR
+<span class="token keyword">FROM</span>       DBC<span class="token punctuation">.</span>TABLESIZE tsize
+<span class="token keyword">JOIN</span>          DBC<span class="token punctuation">.</span><span class="token keyword">TABLES</span> tdef
+<span class="token keyword">ON</span>   tsize<span class="token punctuation">.</span>DATABASENAME <span class="token operator">=</span> tdef<span class="token punctuation">.</span>DATABASENAME
+<span class="token operator">AND</span> tsize<span class="token punctuation">.</span>TABLENAME <span class="token operator">=</span> tdef<span class="token punctuation">.</span>TABLENAME
+<span class="token keyword">WHERE</span> tsize<span class="token punctuation">.</span>DATABASENAME<span class="token operator">=</span><span class="token string">'P_trainingxi_T'</span>
+<span class="token keyword">GROUP</span> <span class="token keyword">BY</span> <span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">,</span><span class="token number">6</span><span class="token punctuation">,</span><span class="token number">7</span><span class="token punctuation">;</span>
+</code></pre>
+
+<pre class=" language-sql"><code class=" language-sql">COLLECT STATS <span class="token keyword">ON</span> p_imbi_t<span class="token punctuation">.</span>MH_ROTATION_TYPE_LKP <span class="token keyword">INDEX</span>  <span class="token punctuation">(</span>ROTATION_ID<span class="token punctuation">,</span> ROTATION_TYPE_ID<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+
+<p>关于条件放置位置对于效率的影响
+假設有三個table，table1、table2、table3，用下列方式 Join 起來：
+<pre class=" language-sql"><code class=" language-sql"><span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> table1
+<span class="token keyword">INNER</span> <span class="token keyword">JOIN</span> table2 <span class="token keyword">ON</span> table1<span class="token punctuation">.</span>K1<span class="token operator">=</span>table2<span class="token punctuation">.</span>K2
+<span class="token keyword">LEFT</span> <span class="token keyword">JOIN</span> table3 <span class="token keyword">ON</span> table1<span class="token punctuation">.</span>K1<span class="token operator">=</span>table3<span class="token punctuation">.</span>K3
+</code></pre>在此例中有三種放 WHERE  condition式的位置：<p></p>
+
+<p>1.
+<pre class=" language-sql"><code class=" language-sql"><span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> table1
+<span class="token keyword">INNER</span> <span class="token keyword">JOIN</span> table2 <span class="token keyword">ON</span> table1<span class="token punctuation">.</span>K1<span class="token operator">=</span>table2<span class="token punctuation">.</span>K2
+<span class="token keyword">LEFT</span> <span class="token keyword">JOIN</span> table3 <span class="token keyword">ON</span> table1<span class="token punctuation">.</span>K1<span class="token operator">=</span>table3<span class="token punctuation">.</span>K3
+<span class="token keyword">WHERE</span> <span class="token operator">all</span> condition
+</code></pre>2.
+<pre class=" language-sql"><code class=" language-sql"><span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> table1
+<span class="token keyword">INNER</span> <span class="token keyword">JOIN</span> table2 <span class="token keyword">ON</span> <span class="token punctuation">(</span>table1<span class="token punctuation">.</span>K1<span class="token operator">=</span>table2<span class="token punctuation">.</span>K2 <span class="token operator">AND</span> table1 <span class="token operator">and</span> table2 condition<span class="token punctuation">)</span>
+<span class="token keyword">LEFT</span> <span class="token keyword">JOIN</span> table3 <span class="token keyword">ON</span> <span class="token punctuation">(</span>table1<span class="token punctuation">.</span>K1<span class="token operator">=</span>table3<span class="token punctuation">.</span>K3 <span class="token operator">AND</span> table1 <span class="token operator">and</span> table3 condition<span class="token punctuation">)</span>
+</code></pre>3.
+<pre class=" language-sql"><code class=" language-sql"><span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> <span class="token punctuation">(</span><span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> table1 <span class="token keyword">WHERE</span> table1 condition<span class="token punctuation">)</span> <span class="token keyword">AS</span> table1
+<span class="token keyword">INNER</span> <span class="token keyword">JOIN</span> <span class="token punctuation">(</span><span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> table2 <span class="token keyword">WHERE</span> table2 condition<span class="token punctuation">)</span> <span class="token keyword">AS</span> table2 <span class="token keyword">ON</span> table1<span class="token punctuation">.</span>K1<span class="token operator">=</span>table2<span class="token punctuation">.</span>K2
+<span class="token keyword">LEFT</span> <span class="token keyword">JOIN</span> <span class="token punctuation">(</span><span class="token keyword">SELECT</span> <span class="token operator">*</span> <span class="token keyword">FROM</span> table3 <span class="token keyword">WHERE</span> table3 condition<span class="token punctuation">)</span> <span class="token keyword">AS</span> table3 <span class="token keyword">ON</span> table1<span class="token punctuation">.</span>K1<span class="token operator">=</span>table3<span class="token punctuation">.</span>K3
+</code></pre>法1 是相容度最高的用法，也是效能最差的方法，非簡單table格或必要下，不要使用，否則會嚴重造成資料庫查詢負擔，間接造成系統負擔。法1的作法是將所有內容先查詢出來，再逐步依 condition過濾出要的內容。<p></p>
+
+<p>法2 可提高一定的效能，但是可加在紅色的 condition就要看資料庫支援的能力，有些允許Key放在後方，有些不允許，甚至有些 WHERE  condition必須放在法1的位置， condition與 WHERE  condition相同，過濾資料多的放前面，過濾資料少的 condition放後面。查詢時，一般是先做table1table2連結，過濾完 condition後，再做table3連結，再過濾 condition。</p>
+
+<p>法3 有點類似 View 的作法，每個查詢都建立類似 View 的概念，每個table僅查詢出需要連結的部分進行連結。</p>
+
+<p>法2 適用在重複資料少的情形下，或是查詢基本上都是整張table，法3因為會建立子查詢，所以適用在大量重複資料的擷取，或是從巨型資料table中抽出少部分資料做 JOIN，比如說查詢的若是屬性table這類，大部分是1對1，法2會比較快，若是查詢類似事件紀錄這類1對多，或是事件紀錄太多只抽出最近的紀錄，可能法3會比較快。<em>/
+/</em>法1 是相容度最高的用法，也是效能最差的方法，非簡單表格或必要下，不要使用，否則會嚴重造成資料庫查詢負擔，間接造成系統負擔。法1的作法是將所有內容先查詢出來，再逐步依條件過濾出要的內容。</p>
+
+<p>法2 可提高一定的效能，但是可加在紅色的條件就要看資料庫支援的能力，有些允許Key放在後方，有些不允許，甚至有些 WHERE 條件必須放在法1的位置，條件與 WHERE 條件相同，過濾資料多的放前面，過濾資料少的條件放後面。查詢時，一般是先做表1表2連結，過濾完條件後，再做表3連結，再過濾條件。</p>
+
+<p>法3 有點類似 View 的作法，每個查詢都建立類似 View 的概念，每個表僅查詢出需要連結的部分進行連結。</p>
+
+<p>法2 適用在重複資料少的情形下，或是查詢基本上都是整張表，法3因為會建立子查詢，所以適用在大量重複資料的擷取，或是從巨型資料表中抽出少部分資料做 JOIN，比如說查詢的若是屬性表這類，大部分是1對1，法2會比較快，若是查詢類似事件紀錄這類1對多，或是事件紀錄太多只抽出最近的紀錄，可能法3會比較快。*/</p>
 <!-- content end -->
 </div>
 <br>
